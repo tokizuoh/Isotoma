@@ -19,7 +19,6 @@ struct Isotoma {
     
     static func main() async throws {
         if let posts = await fetchLatestPosts(count: 5) {
-            // TODO: CSVに加工する
             try savePostsToJSONFile(posts: posts)
         } else {
             // NOP
@@ -64,8 +63,6 @@ struct Isotoma {
         encoder.outputFormatting = .prettyPrinted
         
         let jsonData = try encoder.encode(posts)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
-        
         let fileURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("latest_posts.json")
         try jsonData.write(to: fileURL)
     }

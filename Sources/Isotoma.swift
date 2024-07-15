@@ -1,14 +1,14 @@
 import Foundation
 
-enum Source {
+enum Source: String, Codable {
     case hatena
     case zenn
 }
 
-struct Post {
+struct Post: Codable {
     let title: String
-    let urlString: String
-    let published: Date
+    let url: String
+    let publishedAt: Date
     let source: Source
 }
 
@@ -17,10 +17,10 @@ struct Isotoma {
     private static let hatena = "https://tokizuoh.hatenablog.com/rss?size=5"
     private static let zenn = "https://zenn.dev/tokizuoh/feed"
     
-    static func main() async {
+    static func main() async throws {
         if let posts = await fetchLatestPosts(count: 5) {
             // TODO: CSVに加工する
-            print(posts)
+            try savePostsToJSONFile(posts: posts)
         } else {
             // NOP
         }
@@ -32,7 +32,7 @@ struct Isotoma {
         
         let allPosts = (await [hatenaPosts, zennPosts].compactMap { $0 }).flatMap { $0 }
         
-        let sortedPosts = allPosts.sorted(by: { $0.published > $1.published })
+        let sortedPosts = allPosts.sorted(by: { $0.publishedAt > $1.publishedAt })
         
         return Array(sortedPosts.prefix(count))
     }
@@ -56,6 +56,18 @@ struct Isotoma {
     private static func fetch(from url: URL) async throws -> Data {
         let (data, _) = try await URLSession.shared.data(from: url)
         return data
+    }
+    
+    private static func savePostsToJSONFile(posts: [Post]) throws {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = .prettyPrinted
+        
+        let jsonData = try encoder.encode(posts)
+        let jsonString = String(data: jsonData, encoding: .utf8)!
+        
+        let fileURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("latest_posts.json")
+        try jsonData.write(to: fileURL)
     }
 }
 
@@ -88,7 +100,7 @@ class RSSParserDelegate: NSObject, XMLParserDelegate {
                let urlString = currentItem["link"],
                let pubDateString = currentItem["pubDate"],
                let pubDate = dateFromString(pubDateString) {
-                let post = Post(title: title, urlString: urlString, published: pubDate, source: source)
+                let post = Post(title: title, url: urlString, publishedAt: pubDate, source: source)
                 posts.append(post)
             }
         }

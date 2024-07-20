@@ -60,7 +60,7 @@ struct Isotoma {
     private static func savePostsToJSONFile(posts: [Post]) throws {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = .prettyPrinted
+        encoder.outputFormatting = .sortedKeys
         
         let jsonData = try encoder.encode(posts)
         let fileURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("latest_posts.json")

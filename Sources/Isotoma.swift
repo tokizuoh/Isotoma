@@ -14,12 +14,12 @@ struct Post: Codable {
 
 @main
 struct Isotoma {
-    private static let hatena = "https://tokizuoh.hatenablog.com/rss?size=5"
+    private static let hatena = "https://tokizuoh.hatenablog.com/rss?size=10"
     private static let zenn = "https://zenn.dev/tokizuoh/feed"
     
     static func main() async throws {
-        if let posts = await fetchLatestPosts(count: 5) {
-            try savePostsToJSONFile(posts: posts)
+        if let posts = await fetchLatestPosts(count: 10) {
+            try savePostsToJSONFile(posts: Array(posts.prefix(5)))
         } else {
             // NOP
         }
@@ -97,6 +97,12 @@ class RSSParserDelegate: NSObject, XMLParserDelegate {
                let urlString = currentItem["link"],
                let pubDateString = currentItem["pubDate"],
                let pubDate = dateFromString(pubDateString) {
+                if source == .hatena,
+                   let category = currentItem["category"],
+                   category == "その他" {
+                    return
+                }
+
                 let post = Post(title: title, url: urlString, publishedAt: pubDate, source: source)
                 posts.append(post)
             }
